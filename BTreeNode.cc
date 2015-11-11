@@ -9,9 +9,9 @@ const int NONLEAF_ENTRY_SIZE = sizeof(int)+sizeof(PageId);
 
 // For each leaf node, we create a integer in beginning of the node buffer to record node entry count. 
 // At the end of the buffer, there is a pageid pointing to the next page.
-// ----------------------------------------------------------------------------
-// |--count(4 bytes)--|--node entries(12 bytes for each)--|--pageid(4 bytes)--|
-// ----------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------
+// |--count(4 bytes)--|--node entries(12 bytes for each)--|--some unused bytes--|--pageid(4 bytes)--|
+// --------------------------------------------------------------------------------------------------
 
 // For each entry of a leaf node in buffer,
 // ----------------------------------------
@@ -199,12 +199,12 @@ RC BTLeafNode::setNextNodePtr(PageId pid)
 }
 
 // For each non-leaf node, we create a integer in beginning of the node buffer to record node key count. 
-// At the end of the buffer, there is a pageid pointing to the next page.
-// ----------------------------------------------------------------------------
-// |--count(4 bytes)--|--node entries(8 bytes for each)--|--PageId(4 bytes)---|
-// ----------------------------------------------------------------------------
+// Right behind the count, there is a pageid pointing to the first child page.
+// --------------------------------------------------------------------------------------------------
+// |--count(4 bytes)--|--PageId(4 bytes)---|--node entries(8 bytes for each)--|--some unused bytes--|
+// --------------------------------------------------------------------------------------------------
 
-// For each entry of an non-lrsg node,
+// For each entry of an non-leaf node,
 // --------------------------------------
 // |--PageId(4 bytes)--|--Key(4 bytes)--|
 // --------------------------------------
@@ -252,6 +252,31 @@ int BTNonLeafNode::getKeyCount()
  */
 RC BTNonLeafNode::insert(int key, PageId pid)
 {
+	int count = getKeyCount();
+	if (count==MAX_NODE_SIZE)return RC_NODE_FULL;
+
+	int curKey;
+	int eid;
+	for(eid=0; eid<count; eid++){
+		memcpy(&curKey, buffer+sizeof(count)+NONLEAF_ENTRY_SIZE*eid+sizeof(pid), sizeof(curKey));
+
+		if (curKey>= searchKey){
+			break;
+		}
+	}
+
+	// move old entries first
+	memcpy(buffer+sizeof(count)+sizeof(pid)+NONLEAF_ENTRY_SIZE*(eid+1), 
+		buffer+sizeof(count)+sizeof(pid)+NONLEAF_ENTRY_SIZE*eid, 
+		NONLEAF_ENTRY_SIZE*(count-eid));
+
+	// insert new entry
+	memcpy(buffer+sizeof(count)+sizeof(pid)+NONLEAF_ENTRY_SIZE*eid, &key, sizeof(key));
+	memcpy(buffer+sizeof(count)+sizeof(pid)+NONLEAF_ENTRY_SIZE*eid+sizeof(key), &pid, sizeof(pid));
+
+	// update count
+	count++;
+	memcpy(buffer, &count, sizeof(count));
 	return 0; 
 }
 
@@ -266,7 +291,58 @@ RC BTNonLeafNode::insert(int key, PageId pid)
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, int& midKey)
-{ return 0; }
+{
+	int count = getKeyCount();
+	int leftSize = (count+1)/2;
+	int rightSize = count - leftSize;
+
+	int curKey;
+	int eid;
+	for(eid=0; eid<count; eid++){
+		memcpy(&curKey, buffer+sizeof(count)+NONLEAF_ENTRY_SIZE*eid+sizeof(pid), sizeof(curKey));
+
+		if (curKey>= searchKey){
+			break;
+		}
+	}
+
+	// since buffer size is actually larger than max_node_size, we can insert new pair first in the current buffer and then split
+	// move old entries first
+	memcpy(buffer+sizeof(count)+sizeof(PageId)+NONLEAF_ENTRY_SIZE*(eid+1), 
+		buffer+sizeof(count)+sizeof(PageId)+NONLEAF_ENTRY_SIZE*eid, 
+		NONLEAF_ENTRY_SIZE*(count-eid));
+
+	// insert new entry
+	memcpy(buffer+sizeof(count)+sizeof(PageId)+NONLEAF_ENTRY_SIZE*eid, &key, sizeof(key));
+	memcpy(buffer+sizeof(count)+sizeof(PageId)+NONLEAF_ENTRY_SIZE*eid+sizeof(key), &pid, sizeof(pid));
+
+	// set midkey
+	int midOffset = sizeof(count)+sizeof(PageId)+NONLEAF_ENTRY_SIZE*leftSize;
+	memcpy(&midkey, buffer+midOffset, sizeof(midKey));
+
+	// initialize sibling node
+	PageId pid1, pid2;
+	int firstKey;
+	memcpy(&pid1, buffer+midOffset+sizeof(midKey), sizeof(pid1));
+	memcpy(&firstKey, buffer+midOffset+sizeof(midKey)+sizeof(pid1), sizeof(firstKey));
+	memcpy(&pid2, buffer+midOffset+sizeof(midkey)*2+sizeof(pid1), sizeof(pid2));
+	sibling.initializeRoot(pid1, firstKey, pid2);
+
+	// insert the rest of entries
+	PageId newPid;
+	int newKey;
+	for (int i=1; i<rightSize; i++){
+		memcpy(&newKey, buffer+midOffset+NONLEAF_ENTRY_SIZE*(i+1), sizeof(newKey));
+		memcpy(&newPid, buffer+midOffset+NONLEAF_ENTRY_SIZE*(i+1)+sizeof(newKey), sizeof(newPid));
+		sibling.insert(newKey, newPid);
+	}
+
+	// update count
+	count = leftSize;
+	memcpy(buffer, &count, sizeof(count));
+		
+	return 0;
+}
 
 /*
  * Given the searchKey, find the child-node pointer to follow and
@@ -300,4 +376,14 @@ RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTNonLeafNode::initializeRoot(PageId pid1, int key, PageId pid2)
-{ return 0; }
+{
+	// write count
+	int count=1;
+	memcpy(buffer, &count, sizeof(count));
+
+	memcpy(buffer+sizeof(count), &pid1, sizeof(pid1));
+	memcpy(buffer+sizeof(count)+sizeof(pid1), &key, sizeof(key));
+	memcpy(buffer+sizeof(count)+sizeof(pid1)+sizeof(key), &pid2, sizeof(pid2));
+
+	return 0;
+}
