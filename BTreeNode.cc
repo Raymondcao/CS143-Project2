@@ -5,14 +5,15 @@ using namespace std;
 const int MAX_NODE_SIZE = 84;
 const int ENTRY_SIZE = sizeof(int)+sizeof(RecordId);
 const int BUFFER_SIZE = PageFile::PAGE_SIZE;
+const int NONLEAF_ENTRY_SIZE = sizeof(int)+sizeof(PageId);
 
-// For each node, we create a integer in beginning of the node buffer to record node entry count. 
+// For each leaf node, we create a integer in beginning of the node buffer to record node entry count. 
 // At the end of the buffer, there is a pageid pointing to the next page.
 // ----------------------------------------------------------------------------
 // |--count(4 bytes)--|--node entries(12 bytes for each)--|--pageid(4 bytes)--|
 // ----------------------------------------------------------------------------
 
-// For each entry of a node in buffer,
+// For each entry of a leaf node in buffer,
 // ----------------------------------------
 // |--key(4 bytes)--|--RecordId(8 bytes)--|
 // ----------------------------------------
@@ -197,6 +198,18 @@ RC BTLeafNode::setNextNodePtr(PageId pid)
 	return 0;
 }
 
+// For each non-leaf node, we create a integer in beginning of the node buffer to record node key count. 
+// At the end of the buffer, there is a pageid pointing to the next page.
+// ----------------------------------------------------------------------------
+// |--count(4 bytes)--|--node entries(8 bytes for each)--|--PageId(4 bytes)---|
+// ----------------------------------------------------------------------------
+
+// For each entry of an non-lrsg node,
+// --------------------------------------
+// |--PageId(4 bytes)--|--Key(4 bytes)--|
+// --------------------------------------
+
+
 /*
  * Read the content of the node from the page pid in the PageFile pf.
  * @param pid[IN] the PageId to read
@@ -205,8 +218,7 @@ RC BTLeafNode::setNextNodePtr(PageId pid)
  */
 RC BTNonLeafNode::read(PageId pid, const PageFile& pf)
 { 
-	pf.read(pid, buffer);
-	return 0; 
+	return pf.read(pid, buffer);
 }
     
 /*
@@ -217,8 +229,7 @@ RC BTNonLeafNode::read(PageId pid, const PageFile& pf)
  */
 RC BTNonLeafNode::write(PageId pid, PageFile& pf)
 { 
-	pf.write(pid, buffer);
-	return 0; 
+	return pf.write(pid, buffer);
 }
 
 /*
@@ -226,7 +237,11 @@ RC BTNonLeafNode::write(PageId pid, PageFile& pf)
  * @return the number of keys in the node
  */
 int BTNonLeafNode::getKeyCount()
-{ return 0; }
+{
+	int count;
+	memcpy(&count, buffer, sizeof(count));
+	return count;
+}
 
 
 /*
@@ -261,7 +276,21 @@ RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, in
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
-{ return 0; }
+{
+	int count = getKeyCount();
+
+	int curKey;
+	for(int eid=0; eid<count; eid++){
+		memcpy(&curKey, buffer+sizeof(count)+NONLEAF_ENTRY_SIZE*eid+sizeof(pid), sizeof(curKey));
+
+		if (curKey>= searchKey){
+			memcpy(&pid, buffer+sizeof(count)+NONLEAF_ENTRY_SIZE*eid, sizeof(pid));
+			return 0;
+		}
+	}
+	memcpy(&pid, buffer+sizeof(count)+NONLEAF_ENTRY_SIZE*count, sizeof(pid));
+	return 0;
+}
 
 /*
  * Initialize the root node with (pid1, key, pid2).
