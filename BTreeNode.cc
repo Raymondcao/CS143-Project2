@@ -198,6 +198,13 @@ RC BTLeafNode::setNextNodePtr(PageId pid)
 	return 0;
 }
 
+RC BTLeafNode::init()
+{
+	memset(buffer, 0, sizeof(buffer));
+	int count = 0;
+	memcpy(buffer, &count, sizeof(count));
+	return 0;
+}
 // For each non-leaf node, we create a integer in beginning of the node buffer to record node key count. 
 // Right behind the count, there is a pageid pointing to the first child page.
 // --------------------------------------------------------------------------------------------------
