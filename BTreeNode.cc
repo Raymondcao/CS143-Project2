@@ -150,7 +150,7 @@ RC BTLeafNode::locate(int searchKey, int& eid)
 		int curKey;
 		memcpy(&curKey, buffer, sizeof(curKey));
 		
-		if (curKey>=key){
+		if (curKey>=searchKey){
 			eid = i;
 			return 0;
 		}
@@ -260,7 +260,7 @@ RC BTNonLeafNode::insert(int key, PageId pid)
 	for(eid=0; eid<count; eid++){
 		memcpy(&curKey, buffer+sizeof(count)+NONLEAF_ENTRY_SIZE*eid+sizeof(pid), sizeof(curKey));
 
-		if (curKey>= searchKey){
+		if (curKey>= key){
 			break;
 		}
 	}
@@ -301,7 +301,7 @@ RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, in
 	for(eid=0; eid<count; eid++){
 		memcpy(&curKey, buffer+sizeof(count)+NONLEAF_ENTRY_SIZE*eid+sizeof(pid), sizeof(curKey));
 
-		if (curKey>= searchKey){
+		if (curKey>= key){
 			break;
 		}
 	}
@@ -318,14 +318,14 @@ RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, in
 
 	// set midkey
 	int midOffset = sizeof(count)+sizeof(PageId)+NONLEAF_ENTRY_SIZE*leftSize;
-	memcpy(&midkey, buffer+midOffset, sizeof(midKey));
+	memcpy(&midKey, buffer+midOffset, sizeof(midKey));
 
 	// initialize sibling node
 	PageId pid1, pid2;
 	int firstKey;
 	memcpy(&pid1, buffer+midOffset+sizeof(midKey), sizeof(pid1));
 	memcpy(&firstKey, buffer+midOffset+sizeof(midKey)+sizeof(pid1), sizeof(firstKey));
-	memcpy(&pid2, buffer+midOffset+sizeof(midkey)*2+sizeof(pid1), sizeof(pid2));
+	memcpy(&pid2, buffer+midOffset+sizeof(midKey)*2+sizeof(pid1), sizeof(pid2));
 	sibling.initializeRoot(pid1, firstKey, pid2);
 
 	// insert the rest of entries
@@ -340,7 +340,7 @@ RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, in
 	// update count
 	count = leftSize;
 	memcpy(buffer, &count, sizeof(count));
-		
+
 	return 0;
 }
 
