@@ -148,7 +148,7 @@ RC BTLeafNode::locate(int searchKey, int& eid)
 
 	for(int i=0; i<count; i++){
 		int curKey;
-		memcpy(&curKey, buffer, sizeof(curKey));
+		memcpy(&curKey, buffer+sizeof(count)+ENTRY_SIZE*i, sizeof(curKey));
 		
 		if (curKey>=searchKey){
 			eid = i;
