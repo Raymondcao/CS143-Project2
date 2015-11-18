@@ -14,6 +14,11 @@
 #include "PageFile.h"
 #include "Bruinbase.h"
 
+const int MAX_NODE_SIZE = 84;
+const int ENTRY_SIZE = sizeof(int)+sizeof(RecordId);
+const int BUFFER_SIZE = PageFile::PAGE_SIZE;
+const int NONLEAF_ENTRY_SIZE = sizeof(int)+sizeof(PageId);
+
 /**
  * BTLeafNode: The class representing a B+tree leaf node.
  */
@@ -98,8 +103,8 @@ class BTLeafNode {
     * @return 0 if successful. Return an error code if there is an error.
     */
     RC write(PageId pid, PageFile& pf);
-
-    RC init();
+	
+	BTLeafNode();
   private:
    /**
     * The main memory buffer for loading the content of the disk page 
@@ -177,6 +182,7 @@ class BTNonLeafNode {
     * @return 0 if successful. Return an error code if there is an error.
     */
     RC write(PageId pid, PageFile& pf);
+	BTNonLeafNode();
 
   private:
    /**

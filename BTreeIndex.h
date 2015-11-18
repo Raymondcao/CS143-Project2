@@ -97,6 +97,9 @@ class BTreeIndex {
   /// this class is destructed. Make sure to store the values of the two 
   /// variables in disk, so that they can be reconstructed when the index
   /// is opened again later.
+  PageId path[100];
+  RC insert_into_parent(int level, PageId childpid, int key, PageId sib_pid);
+  bool not_read;
 };
 
 #endif /* BTREEINDEX_H */

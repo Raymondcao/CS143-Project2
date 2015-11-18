@@ -2,10 +2,7 @@
 
 using namespace std;
 
-const int MAX_NODE_SIZE = 84;
-const int ENTRY_SIZE = sizeof(int)+sizeof(RecordId);
-const int BUFFER_SIZE = PageFile::PAGE_SIZE;
-const int NONLEAF_ENTRY_SIZE = sizeof(int)+sizeof(PageId);
+
 
 // For each leaf node, we create a integer in beginning of the node buffer to record node entry count. 
 // At the end of the buffer, there is a pageid pointing to the next page.
@@ -150,9 +147,14 @@ RC BTLeafNode::locate(int searchKey, int& eid)
 		int curKey;
 		memcpy(&curKey, buffer+sizeof(count)+ENTRY_SIZE*i, sizeof(curKey));
 		
-		if (curKey>=searchKey){
+		if (curKey==searchKey){
 			eid = i;
 			return 0;
+		}
+		if(curKey > searchKey)
+		{
+			eid = i;
+			return RC_NO_SUCH_RECORD;
 		}
 	}
 
@@ -198,12 +200,12 @@ RC BTLeafNode::setNextNodePtr(PageId pid)
 	return 0;
 }
 
-RC BTLeafNode::init()
+ BTLeafNode::BTLeafNode()
 {
 	memset(buffer, 0, sizeof(buffer));
 	int count = 0;
 	memcpy(buffer, &count, sizeof(count));
-	return 0;
+	setNextNodePtr(-1);
 }
 // For each non-leaf node, we create a integer in beginning of the node buffer to record node key count. 
 // Right behind the count, there is a pageid pointing to the first child page.
@@ -215,7 +217,12 @@ RC BTLeafNode::init()
 // --------------------------------------
 // |--PageId(4 bytes)--|--Key(4 bytes)--|
 // --------------------------------------
-
+BTNonLeafNode::BTNonLeafNode()
+{
+	memset(buffer, 0, sizeof(buffer));
+	int count = 0;
+	memcpy(buffer, &count, sizeof(count));
+}
 
 /*
  * Read the content of the node from the page pid in the PageFile pf.
