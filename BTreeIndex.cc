@@ -9,7 +9,7 @@
  
 #include "BTreeIndex.h"
 #include "BTreeNode.h"
-
+#include <string.h>
 using namespace std;
 
 /*
@@ -112,7 +112,7 @@ RC BTreeIndex::insert_into_parent(int level, PageId childpid, int key, PageId si
 	{
 		BTNonLeafNode root;
 		root.initializeRoot(childpid,  key,  sib_pid);
-		PageId r = endpid();
+		PageId r = pf.endPid();
 		root.write(r, pf);
 		rootPid = r;
 		return 0;
@@ -160,7 +160,7 @@ RC BTreeIndex::insert_into_parent(int level, PageId childpid, int key, PageId si
  */
 RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 {
-	if(rootpid == -1)
+	if(rootPid == -1)
 		return RC_NO_SUCH_RECORD;
 	int level = 0;
 	PageId pid;

@@ -13,6 +13,7 @@
 #include "RecordFile.h"
 #include "PageFile.h"
 #include "Bruinbase.h"
+#include <string.h>
 
 const int MAX_NODE_SIZE = 84;
 const int ENTRY_SIZE = sizeof(int)+sizeof(RecordId);
