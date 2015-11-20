@@ -24,12 +24,18 @@ int main()
   // tree->open("test.o", 'w');
 
   // RecordId rid;
-  // for (int key =1; key< 200; key++){
+  // for (int key =1; key< 10000; key++){
 	 //  rf->append(key, "first test", rid);
 	 //  tree->insert(key, rid);
   // }
 
   // tree->printTree();
+
+  // IndexCursor ic;
+  // int key = 198;
+  // tree->locate(key, ic);
+
+  // fprintf(stdout, "IndexCursor: pid:%i, eid:%i\n", ic.pid, ic.eid);
   // tree->close();
 
   return 0;

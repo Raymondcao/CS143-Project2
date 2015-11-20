@@ -14,6 +14,8 @@
 
 using namespace std;
 
+#define DEBUG 1
+
 /*
  * BTreeIndex constructor
  */
@@ -50,7 +52,7 @@ RC BTreeIndex::open(const string& indexname, char mode)
 		memset(buffer, 0, sizeof(buffer));
 		pf.read(0, buffer);
 		memcpy(&rootPid, buffer, sizeof(PageId));
-		memcpy(&treeHeight, buffer + sizeof(PageId) + 1, sizeof(int));
+		memcpy(&treeHeight, buffer + sizeof(PageId) + sizeof(not_read), sizeof(int));
 		not_read = false;
 	}
 	return code;
@@ -62,7 +64,12 @@ RC BTreeIndex::open(const string& indexname, char mode)
  */
 RC BTreeIndex::close()
 {
-    return 0;
+	RC rc;
+	memcpy(buffer, &rootPid, sizeof(PageId));
+	memcpy(buffer+sizeof(PageId), &not_read, sizeof(not_read));
+	memcpy(buffer+sizeof(PageId)+1,&treeHeight, sizeof(int));
+	pf.write(0, buffer);
+	return pf.close();
 }
 
 /*
@@ -73,6 +80,10 @@ RC BTreeIndex::close()
  */
 RC BTreeIndex::insert(int key, const RecordId& rid)
 {
+#if DEBUG
+	fprintf(stdout, "Inserting key: %i, current tree height is %i\n", key, treeHeight);
+#endif
+
 	BTLeafNode l;
 	PageId pid;
 	IndexCursor ic;
@@ -118,6 +129,7 @@ RC BTreeIndex::insert_into_parent(int level, PageId childpid, int key, PageId si
 		PageId r = pf.endPid();
 		root.write(r, pf);
 		rootPid = r;
+		treeHeight++;
 		return 0;
 	}
 	BTNonLeafNode parent;
@@ -240,10 +252,12 @@ RC BTreeIndex::printTree(PageId rootPid, int height)
 			int key;
 			RecordId rid;
 			leaf.readEntry(i, key, rid);
-			fprintf(stdout, "Key:%i PageId:%i sid:%i\n", key, rid.pid, rid.sid);
+			fprintf(stdout, "Root level Key:%i PageId:%i sid:%i\n", key, rid.pid, rid.sid);
 		}
 		return 0;
 	}
+
+
 
 
 }
