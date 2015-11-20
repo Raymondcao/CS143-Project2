@@ -87,7 +87,8 @@ class BTreeIndex {
    * @return error code. 0 if no error
    */
   RC readForward(IndexCursor& cursor, int& key, RecordId& rid);
-  
+  RC printTree();
+
  private:
   PageFile pf;         /// the PageFile used to store the actual b+tree in disk
 
@@ -99,6 +100,8 @@ class BTreeIndex {
   /// is opened again later.
   PageId path[100];
   RC insert_into_parent(int level, PageId childpid, int key, PageId sib_pid);
+  RC printTree(PageId rootPid, int height);
+
   bool not_read;
 };
 

@@ -11,10 +11,26 @@
 #include "SqlEngine.h"
 #include <cstdio>
 
+#include "BTreeIndex.h"
+#include "RecordFile.h"
+
 int main()
 {
   // run the SQL engine taking user commands from standard input (console).
   SqlEngine::run(stdin);
+
+  // RecordFile* rf = new RecordFile("testdata.o", 'w');
+  // BTreeIndex* tree = new BTreeIndex();
+  // tree->open("test.o", 'w');
+
+  // RecordId rid;
+  // for (int key =1; key< 200; key++){
+	 //  rf->append(key, "first test", rid);
+	 //  tree->insert(key, rid);
+  // }
+
+  // tree->printTree();
+  // tree->close();
 
   return 0;
 }

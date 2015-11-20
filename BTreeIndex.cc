@@ -10,6 +10,8 @@
 #include "BTreeIndex.h"
 #include "BTreeNode.h"
 #include <string.h>
+#include <cstdio>
+
 using namespace std;
 
 /*
@@ -74,6 +76,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
 	BTLeafNode l;
 	PageId pid;
 	IndexCursor ic;
+
 	if (rootPid != -1)
 	{
 	    locate(key, ic);//this also sets the path variable
@@ -187,10 +190,13 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 	BTLeafNode l;
 	l.read(pid,pf);
 	int eid;
-	if(l.locate(searchKey, eid) == RC_NO_SUCH_RECORD)
-		return RC_NO_SUCH_RECORD;
+	RC rc;
+	rc = l.locate(searchKey, eid);
 	cursor.eid = eid;
 	cursor.pid = pid;
+	if(rc == RC_NO_SUCH_RECORD)
+		return RC_NO_SUCH_RECORD;
+
     return 0;
 }
 
@@ -215,4 +221,29 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 	}
 	else
 		cursor.eid+=1;
+}
+
+RC BTreeIndex::printTree()
+{
+	printTree(rootPid, treeHeight);
+	return 0;
+}
+
+RC BTreeIndex::printTree(PageId rootPid, int height)
+{
+	if (!height)return 0;
+	if (height==1){
+		BTLeafNode leaf;
+		leaf.read(rootPid, pf);
+		int numEntry = leaf.getKeyCount();
+		for (int i=0; i<numEntry; i++){
+			int key;
+			RecordId rid;
+			leaf.readEntry(i, key, rid);
+			fprintf(stdout, "Key:%i PageId:%i sid:%i\n", key, rid.pid, rid.sid);
+		}
+		return 0;
+	}
+
+
 }

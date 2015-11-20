@@ -1,5 +1,6 @@
 #include "BTreeNode.h"
 #include <string.h>
+#include <cstdio>
 using namespace std;
 
 
@@ -142,7 +143,8 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
 RC BTLeafNode::locate(int searchKey, int& eid)
 {
 	int count = getKeyCount();
-
+	eid = 0;
+	
 	for(int i=0; i<count; i++){
 		int curKey;
 		memcpy(&curKey, buffer+sizeof(count)+ENTRY_SIZE*i, sizeof(curKey));
