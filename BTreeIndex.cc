@@ -44,7 +44,7 @@ RC BTreeIndex::open(const string& indexname, char mode)
 		PageId root = -1;
 		memcpy(buffer, &root, sizeof(PageId));
 		int height = 0;
-		memcpy(buffer+sizeof(PageId)+1,&height, sizeof(int));
+		memcpy(buffer+sizeof(PageId),&height, sizeof(int));
 		pf.write(0, buffer);
 	}
 	if(mode == 'r' && not_read)
@@ -64,10 +64,10 @@ RC BTreeIndex::open(const string& indexname, char mode)
  */
 RC BTreeIndex::close()
 {
-	RC rc;
+	char buffer[PageFile::PAGE_SIZE];
+	pf.read(0, buffer);
 	memcpy(buffer, &rootPid, sizeof(PageId));
-	memcpy(buffer+sizeof(PageId), &not_read, sizeof(not_read));
-	memcpy(buffer+sizeof(PageId)+1,&treeHeight, sizeof(int));
+	memcpy(buffer+sizeof(PageId),&treeHeight, sizeof(int));
 	pf.write(0, buffer);
 	return pf.close();
 }
@@ -81,7 +81,7 @@ RC BTreeIndex::close()
 RC BTreeIndex::insert(int key, const RecordId& rid)
 {
 #if DEBUG
-	fprintf(stdout, "Inserting key: %i, current tree height is %i\n", key, treeHeight);
+	// fprintf(stdout, "Inserting key: %i, current tree height is %i\n", key, treeHeight);
 #endif
 
 	BTLeafNode l;
@@ -237,16 +237,17 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 
 RC BTreeIndex::printTree()
 {
-	printTree(rootPid, treeHeight);
+	printTree(rootPid, treeHeight, 1, 10000);
 	return 0;
 }
 
-RC BTreeIndex::printTree(PageId rootPid, int height)
+RC BTreeIndex::printTree(PageId root, int height, int start, int end)
 {
 	if (!height)return 0;
+
 	if (height==1){
 		BTLeafNode leaf;
-		leaf.read(rootPid, pf);
+		leaf.read(root, pf);
 		int numEntry = leaf.getKeyCount();
 		for (int i=0; i<numEntry; i++){
 			int key;
@@ -257,7 +258,20 @@ RC BTreeIndex::printTree(PageId rootPid, int height)
 		return 0;
 	}
 
+	BTLeafNode leaf;
+	int rc;
+	RecordId rid;
+	int key, readKey;
+	IndexCursor ic;
 
-
-
+	for (int key=start; key<end; key++){
+		rc = locate(key, ic);
+		if (rc){
+			fprintf(stdout, "key: %i not found\n", key);
+		}
+		leaf.read(ic.pid, pf);
+		leaf.readEntry(ic.eid, readKey, rid);
+		fprintf(stdout, "key: %i readKey:%i rid pid:%i sid:%i\n", key, readKey, rid.pid, rid.sid);
+	}
+	return 0;
 }

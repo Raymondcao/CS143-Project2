@@ -100,7 +100,7 @@ class BTreeIndex {
   /// is opened again later.
   PageId path[100];
   RC insert_into_parent(int level, PageId childpid, int key, PageId sib_pid);
-  RC printTree(PageId rootPid, int height);
+  RC printTree(PageId root, int height, int start, int end);
 
   bool not_read;
 };

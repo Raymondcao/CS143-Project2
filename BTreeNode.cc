@@ -65,11 +65,8 @@ RC BTLeafNode::insert(int key, const RecordId& rid)
 
 	int startPos = sizeof(count);
 	int i;
-	if (locate(key,i)<0){
-		startPos += count*ENTRY_SIZE;
-	}else{
-		startPos += i*ENTRY_SIZE;
-	}
+	locate(key,i);
+	startPos += i*ENTRY_SIZE;
 
 	// move other entries and insert the new entry
 	memcpy(buffer+startPos+ENTRY_SIZE, buffer+startPos, (count-i)*ENTRY_SIZE);
@@ -143,8 +140,8 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
 RC BTLeafNode::locate(int searchKey, int& eid)
 {
 	int count = getKeyCount();
-	eid = 0;
-	
+	eid = count;
+
 	for(int i=0; i<count; i++){
 		int curKey;
 		memcpy(&curKey, buffer+sizeof(count)+ENTRY_SIZE*i, sizeof(curKey));
@@ -177,6 +174,7 @@ RC BTLeafNode::readEntry(int eid, int& key, RecordId& rid)
 	if (eid>=count)return RC_END_OF_TREE;
 	memcpy(&key, buffer+sizeof(count)+ENTRY_SIZE*eid, sizeof(key));
 	memcpy(&rid, buffer+sizeof(count)+sizeof(key)+ENTRY_SIZE*eid, sizeof(RecordId));
+	fprintf(stdout, "rid: pid: %i sid: %i\n", rid.pid, rid.sid);
 	return 0;
 }
 

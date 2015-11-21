@@ -17,26 +17,32 @@
 int main()
 {
   // run the SQL engine taking user commands from standard input (console).
-  SqlEngine::run(stdin);
+  // SqlEngine::run(stdin);
 
-  // RecordFile* rf = new RecordFile("testdata.o", 'w');
-  // BTreeIndex* tree = new BTreeIndex();
-  // tree->open("test.o", 'w');
+  RecordFile* rf = new RecordFile("testdata.o", 'w');
+  BTreeIndex* tree = new BTreeIndex();
+  tree->open("test.o", 'w');
 
-  // RecordId rid;
-  // for (int key =1; key< 10000; key++){
-	 //  rf->append(key, "first test", rid);
-	 //  tree->insert(key, rid);
-  // }
+  RecordId rid;
+  for (int key =1; key< 10000; key++){
+	  rf->append(key, "first test", rid);
+    fprintf(stdout, "origin key: %i rid pid:%i sid:%i\n", key, rid.pid, rid.sid);
+	  tree->insert(key, rid);
+  }
 
-  // tree->printTree();
+  tree->printTree();
 
-  // IndexCursor ic;
-  // int key = 198;
-  // tree->locate(key, ic);
+  fprintf(stdout, "key 9999 rid pid:%i sid:%i\n", rid.pid, rid.sid);
+  IndexCursor ic;
+  int key = 9999;
+  tree->locate(key, ic);
 
-  // fprintf(stdout, "IndexCursor: pid:%i, eid:%i\n", ic.pid, ic.eid);
-  // tree->close();
+  tree->readForward(ic, key, rid);
+  fprintf(stdout, "key9999: pid:%i, sid:%i\n", rid.pid, rid.sid);
+
+
+
+  tree->close();
 
   return 0;
 }
