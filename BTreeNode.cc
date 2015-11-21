@@ -174,7 +174,6 @@ RC BTLeafNode::readEntry(int eid, int& key, RecordId& rid)
 	if (eid>=count)return RC_END_OF_TREE;
 	memcpy(&key, buffer+sizeof(count)+ENTRY_SIZE*eid, sizeof(key));
 	memcpy(&rid, buffer+sizeof(count)+sizeof(key)+ENTRY_SIZE*eid, sizeof(RecordId));
-	fprintf(stdout, "rid: pid: %i sid: %i\n", rid.pid, rid.sid);
 	return 0;
 }
 

@@ -51,8 +51,12 @@ RC BTreeIndex::open(const string& indexname, char mode)
 	{
 		memset(buffer, 0, sizeof(buffer));
 		pf.read(0, buffer);
-		memcpy(&rootPid, buffer, sizeof(PageId));
-		memcpy(&treeHeight, buffer + sizeof(PageId) + sizeof(not_read), sizeof(int));
+		PageId pid;
+		int height;
+		memcpy(&pid, buffer, sizeof(PageId));
+		memcpy(&height, buffer + sizeof(PageId), sizeof(int));
+		rootPid = pid;
+		treeHeight = height;
 		not_read = false;
 	}
 	return code;
@@ -65,7 +69,6 @@ RC BTreeIndex::open(const string& indexname, char mode)
 RC BTreeIndex::close()
 {
 	char buffer[PageFile::PAGE_SIZE];
-	pf.read(0, buffer);
 	memcpy(buffer, &rootPid, sizeof(PageId));
 	memcpy(buffer+sizeof(PageId),&treeHeight, sizeof(int));
 	pf.write(0, buffer);
@@ -245,18 +248,18 @@ RC BTreeIndex::printTree(PageId root, int height, int start, int end)
 {
 	if (!height)return 0;
 
-	if (height==1){
-		BTLeafNode leaf;
-		leaf.read(root, pf);
-		int numEntry = leaf.getKeyCount();
-		for (int i=0; i<numEntry; i++){
-			int key;
-			RecordId rid;
-			leaf.readEntry(i, key, rid);
-			fprintf(stdout, "Root level Key:%i PageId:%i sid:%i\n", key, rid.pid, rid.sid);
-		}
-		return 0;
-	}
+	// if (height==1){
+	// 	BTLeafNode leaf;
+	// 	leaf.read(root, pf);
+	// 	int numEntry = leaf.getKeyCount();
+	// 	for (int i=0; i<numEntry; i++){
+	// 		int key;
+	// 		RecordId rid;
+	// 		leaf.readEntry(i, key, rid);
+	// 		fprintf(stdout, "Root level Key:%i PageId:%i sid:%i\n", key, rid.pid, rid.sid);
+	// 	}
+	// 	return 0;
+	// }
 
 	BTLeafNode leaf;
 	int rc;
@@ -269,8 +272,7 @@ RC BTreeIndex::printTree(PageId root, int height, int start, int end)
 		if (rc){
 			fprintf(stdout, "key: %i not found\n", key);
 		}
-		leaf.read(ic.pid, pf);
-		leaf.readEntry(ic.eid, readKey, rid);
+		rc = readForward(ic, readKey, rid);
 		fprintf(stdout, "key: %i readKey:%i rid pid:%i sid:%i\n", key, readKey, rid.pid, rid.sid);
 	}
 	return 0;
