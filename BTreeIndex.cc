@@ -14,7 +14,7 @@
 
 using namespace std;
 
-#define DEBUG 1
+#define DEBUG 0
 
 /*
  * BTreeIndex constructor
@@ -35,8 +35,8 @@ BTreeIndex::BTreeIndex()
  */
 RC BTreeIndex::open(const string& indexname, char mode)
 {
-	RC code;
-	code = pf.open(indexname, mode); 
+	RC rc;
+	if ((rc = pf.open(indexname, mode))< 0)return rc;
 	char buffer[PageFile::PAGE_SIZE];
 	if(pf.endPid() == 0)
 	{
@@ -59,7 +59,7 @@ RC BTreeIndex::open(const string& indexname, char mode)
 		treeHeight = height;
 		not_read = false;
 	}
-	return code;
+	return 0;
 }
 
 /*
@@ -84,7 +84,7 @@ RC BTreeIndex::close()
 RC BTreeIndex::insert(int key, const RecordId& rid)
 {
 #if DEBUG
-	// fprintf(stdout, "Inserting key: %i, current tree height is %i\n", key, treeHeight);
+	 fprintf(stdout, "Inserting key: %i, current tree height is %i\n", key, treeHeight);
 #endif
 
 	BTLeafNode l;
@@ -228,7 +228,7 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
     BTLeafNode l;
 	l.read(cursor.pid, pf);
 	RC code = l.readEntry(cursor.eid, key, rid);
-	//
+	
 	if(cursor.eid == MAX_NODE_SIZE-1)//last entry in current leaf, move to next node.. what if there is no next node ? what to set indexcursor to ?
 	{
 		cursor.eid = 0;
@@ -236,6 +236,8 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 	}
 	else
 		cursor.eid+=1;
+
+	return code;
 }
 
 RC BTreeIndex::printTree()
@@ -246,20 +248,8 @@ RC BTreeIndex::printTree()
 
 RC BTreeIndex::printTree(PageId root, int height, int start, int end)
 {
+#if DEBUG
 	if (!height)return 0;
-
-	// if (height==1){
-	// 	BTLeafNode leaf;
-	// 	leaf.read(root, pf);
-	// 	int numEntry = leaf.getKeyCount();
-	// 	for (int i=0; i<numEntry; i++){
-	// 		int key;
-	// 		RecordId rid;
-	// 		leaf.readEntry(i, key, rid);
-	// 		fprintf(stdout, "Root level Key:%i PageId:%i sid:%i\n", key, rid.pid, rid.sid);
-	// 	}
-	// 	return 0;
-	// }
 
 	BTLeafNode leaf;
 	int rc;
@@ -275,5 +265,6 @@ RC BTreeIndex::printTree(PageId root, int height, int start, int end)
 		rc = readForward(ic, readKey, rid);
 		fprintf(stdout, "key: %i readKey:%i rid pid:%i sid:%i\n", key, readKey, rid.pid, rid.sid);
 	}
+#endif
 	return 0;
 }
