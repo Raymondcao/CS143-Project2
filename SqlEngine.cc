@@ -12,6 +12,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
+#include <climits>
 #include "Bruinbase.h"
 #include "SqlEngine.h"
 #include "BTreeIndex.h"
@@ -57,7 +58,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
   }
 
   // open BTreeIndex file and check condition for BTree search
-  if ((rc = bti.open(table + ".idx")) == 0) {
+  if ((rc = bti.open(table + ".idx", 'r')) == 0) {
 
     for (unsigned i = 0; i < cond.size(); i++) {
       if (cond[i].attr && lower < upper){
