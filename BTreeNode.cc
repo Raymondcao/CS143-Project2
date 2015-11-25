@@ -69,7 +69,7 @@ RC BTLeafNode::insert(int key, const RecordId& rid)
 	startPos += i*ENTRY_SIZE;
 
 	// move other entries and insert the new entry
-	memcpy(buffer+startPos+ENTRY_SIZE, buffer+startPos, (count-i)*ENTRY_SIZE);
+	memmove(buffer+startPos+ENTRY_SIZE, buffer+startPos, (count-i)*ENTRY_SIZE);
 	memcpy(buffer+startPos, &key, sizeof(key));
 	memcpy(buffer+startPos+sizeof(key), &rid, sizeof(rid));
 
@@ -108,6 +108,9 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
 			readEntry(--count, curKey, curRid);
 			sibling.insert(curKey, curRid);
 		}
+		// update count
+		memcpy(buffer, &count, sizeof(count));
+		//insert uses old count otherwise
 		insert(key, rid);
 	}else{
 		while(count> leftSize){
@@ -115,10 +118,10 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
 			sibling.insert(curKey, curRid);
 		}
 		sibling.insert(key, rid);
-	}
+		// update count
+		memcpy(buffer, &count, sizeof(count));
 
-	// update count
-	memcpy(buffer, &count, sizeof(count));
+	}
 
 	if (sibling.readEntry(0, curKey, curRid)<0)return RC_END_OF_TREE;
 	siblingKey = curKey;
