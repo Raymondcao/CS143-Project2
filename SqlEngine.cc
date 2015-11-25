@@ -65,23 +65,23 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
         switch(cond[i].comp){
           case SelCond::EQ:
             lower = upper = atoi(cond[i].value);
-            useBTree = true;
+            useBTree = (cond[i].attr == 1);
             break;
           case SelCond::GT:
             lower = max(lower, atoi(cond[i].value)+1);
-            useBTree = true;
+            useBTree = (cond[i].attr == 1);
             break;
           case SelCond::LT:
             upper = min(upper, atoi(cond[i].value)-1);
-            useBTree = true;
+            useBTree = (cond[i].attr == 1);
             break;
           case SelCond::GE:
             lower = max(lower, atoi(cond[i].value));
-            useBTree = true;
+            useBTree = (cond[i].attr == 1);
             break;
           case SelCond::LE:
             upper = min(upper, atoi(cond[i].value));
-            useBTree = true;
+            useBTree = (cond[i].attr == 1);
             break;
         }
       }
