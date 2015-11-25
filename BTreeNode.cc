@@ -282,7 +282,7 @@ RC BTNonLeafNode::insert(int key, PageId pid)
 	}
 
 	// move old entries first
-	memcpy(buffer+sizeof(count)+sizeof(pid)+NONLEAF_ENTRY_SIZE*(eid+1), 
+	memmove(buffer+sizeof(count)+sizeof(pid)+NONLEAF_ENTRY_SIZE*(eid+1), 
 		buffer+sizeof(count)+sizeof(pid)+NONLEAF_ENTRY_SIZE*eid, 
 		NONLEAF_ENTRY_SIZE*(count-eid));
 
@@ -324,7 +324,7 @@ RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, in
 
 	// since buffer size is actually larger than max_node_size, we can insert new pair first in the current buffer and then split
 	// move old entries first
-	memcpy(buffer+sizeof(count)+sizeof(PageId)+NONLEAF_ENTRY_SIZE*(eid+1), 
+	memmove(buffer+sizeof(count)+sizeof(PageId)+NONLEAF_ENTRY_SIZE*(eid+1), 
 		buffer+sizeof(count)+sizeof(PageId)+NONLEAF_ENTRY_SIZE*eid, 
 		NONLEAF_ENTRY_SIZE*(count-eid));
 
