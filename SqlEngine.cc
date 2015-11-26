@@ -86,7 +86,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
       }
     }
 
-    if (attr == 4 && cond.size()==0){
+    if (attr == 4){
       useBTree = true;
     }
   }
