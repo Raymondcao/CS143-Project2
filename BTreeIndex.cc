@@ -229,7 +229,7 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 	l.read(cursor.pid, pf);
 	RC code = l.readEntry(cursor.eid, key, rid);
 	
-	if(cursor.eid == MAX_NODE_SIZE-1)//last entry in current leaf, move to next node.. what if there is no next node ? what to set indexcursor to ?
+	if(cursor.eid == l.getKeyCount()-1)//last entry in current leaf, move to next node.. what if there is no next node ? what to set indexcursor to ?
 	{
 		cursor.eid = 0;
 		cursor.pid = l.getNextNodePtr();

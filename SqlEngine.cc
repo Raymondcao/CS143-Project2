@@ -59,7 +59,6 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 
   // open BTreeIndex file and check condition for BTree search
   if ((rc = bti.open(table + ".idx", 'r')) == 0) {
-
     for (unsigned i = 0; i < cond.size(); i++) {
       if (cond[i].attr && lower < upper){
         switch(cond[i].comp){
@@ -86,9 +85,14 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
         }
       }
     }
+
+    if (attr == 4 && cond.size()==0){
+      useBTree = true;
+    }
   }
 
   if (useBTree){
+    count = 0;
     bti.locate(lower, ic);
     rc = bti.readForward(ic, key, rid);
     while (key<=upper && rc==0){
@@ -169,7 +173,6 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
     }
     rc = 0;
   }
-
   else {
 
     // scan the table file from the beginning
@@ -285,7 +288,7 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
     if (rc=(parseLoadLine(line, key, value))<0){
       return rc;
     }
-    fprintf(stdout, "Load %s\n", value.c_str());
+    // fprintf(stdout, "Load %s\n", value.c_str());
 
     if ((rc=rf.append(key, value, rid))<0){
       return rc;
